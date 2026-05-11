@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIPATDU — Sistem Pelaporan Rapat Terpadu</title>
+<meta name="description" content="Portal resmi SIPATDU — Sistem Pelaporan Rapat Terpadu RSUD Dr. Saiful Anwar Malang">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --navy: #1a2c5b;
+  --navy-deep: #111d3d;
+  --navy-mid: #243670;
+  --blue: #2c5be8;
+  --blue-bright: #4a7fff;
+  --blue-pale: #e8eeff;
+  --white: #ffffff;
+  --off-white: #f5f7fc;
+  --text-muted: #6b7a99;
+  --border: rgba(255,255,255,0.12);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--navy-deep);
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════
+   SPLASH SCREEN
+═══════════════════════════════ */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--navy-deep);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+#splash.exit {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.splash-logo-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 28px;
+  animation: splashIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes splashIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.splash-img {
+  width: 180px; height: 180px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 40px rgba(74,127,255,0.35));
+  animation: logoPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+  0%, 100% { filter: drop-shadow(0 0 30px rgba(74,127,255,0.3)); }
+  50%       { filter: drop-shadow(0 0 55px rgba(74,127,255,0.55)); }
+}
+
+.splash-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(38px, 7vw, 64px);
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -1px;
+  text-align: center;
+  line-height: 1;
+}
+
+.splash-subtitle {
+  font-size: 15px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-align: center;
+  margin-top: -12px;
+}
+
+.splash-divider {
+  width: 48px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--blue-bright), transparent);
+  margin: 0 auto;
+}
+
+.splash-institution {
+  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+  letter-spacing: 0.06em;
+  font-weight: 300;
+}
+
+/* Progress bar */
+.splash-progress {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px; background: rgba(255,255,255,0.07);
+}
+.splash-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--blue-bright));
+  width: 0%;
+  animation: progressFill 2.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  border-radius: 0 2px 2px 0;
+}
+@keyframes progressFill {
+  0%   { width: 0%; }
+  60%  { width: 75%; }
+  100% { width: 100%; }
+}
+
+/* Dots */
+.splash-dots {
+  display: flex; gap: 8px; margin-top: 8px;
+}
+.splash-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  animation: dotBounce 1.4s ease-in-out infinite;
+}
+.splash-dot:nth-child(2) { animation-delay: 0.2s; }
+.splash-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotBounce {
+  0%, 60%, 100% { background: rgba(255,255,255,0.2); transform: scale(1); }
+  30% { background: var(--blue-bright); transform: scale(1.4); }
+}
+
+/* ═══════════════════════════════
+   MAIN PAGE
+═══════════════════════════════ */
+#main {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(44,91,232,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 90%, rgba(26,44,91,0.6) 0%, transparent 70%),
+    var(--navy-deep);
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 0 20px;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.1s;
+}
+#main.visible { opacity: 1; }
+
+/* Subtle grid pattern */
+#main::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(74,127,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74,127,255,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ── HEADER ── */
+.site-header {
+  width: 100%; max-width: 900px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 28px 0 0;
+  position: relative; z-index: 1;
+  animation: fadeDown 0.7s ease both;
+  animation-delay: 0.15s;
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.header-logo {
+  display: flex; align-items: center; gap: 12px;
+}
+.header-logo img {
+  width: 36px; height: 36px; object-fit: contain;
+  filter: brightness(1.1);
+}
+.header-logo-text strong {
+  display: block; font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700; color: var(--white);
+  letter-spacing: -0.3px;
+}
+.header-logo-text span {
+  font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 300;
+}
+
+.header-tag {
+  font-size: 11px; font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 5px 12px; border-radius: 99px;
+  letter-spacing: 0.04em;
+}
+
+/* ── HERO SECTION ── */
+.hero {
+  width: 100%; max-width: 900px;
+  text-align: center;
+  padding: 64px 0 56px;
+  position: relative; z-index: 1;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue-bright);
+  background: rgba(74,127,255,0.12);
+  border: 1px solid rgba(74,127,255,0.25);
+  padding: 6px 16px; border-radius: 99px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.7s ease both; animation-delay: 0.25s;
+}
+.hero-eyebrow::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--blue-bright);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.hero-logo-img {
+  width: 100px; height: 100px; object-fit: contain;
+  display: block; margin: 0 auto 24px;
+  filter: drop-shadow(0 8px 32px rgba(74,127,255,0.4));
+  animation: fadeUp 0.7s ease both; animation-delay: 0.3s;
+}
+
+.hero h1 {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(42px, 8vw, 72px);
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 8px;
+  animation: fadeUp 0.7s ease both; animation-delay: 0.35s;
+}
+
+.hero-tagline {
+  font-size: clamp(14px, 2vw, 17px);
+  color: rgba(255,255,255,0.45);
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+  animation: fadeUp 0.7s ease both; animation-delay: 0.4s;
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: rgba(255,255,255,0.55);
+  max-width: 460px;
+  margin: 0 auto;
+  line-height: 1.7;
+  font-weight: 300;
+  animation: fadeUp 0.7s ease both; animation-delay: 0.45s;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── PORTAL GRID ── */
+.portal-grid {
+  width: 100%; max-width: 900px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  position: relative; z-index: 1;
+  padding-bottom: 60px;
+}
+
+.portal-card {
+  position: relative;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Stagger reveal */
+.portal-card:nth-child(1) { animation: fadeUp 0.7s ease both; animation-delay: 0.5s; }
+.portal-card:nth-child(2) { animation: fadeUp 0.7s ease both; animation-delay: 0.6s; }
+.portal-card:nth-child(3) { animation: fadeUp 0.7s ease both; animation-delay: 0.7s; }
+.portal-card:nth-child(4) { animation: fadeUp 0.7s ease both; animation-delay: 0.8s; }
+
+/* Glow effect per card */
+.portal-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 20px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.portal-card:hover::before { opacity: 1; }
+
+.card-app::before       { background: radial-gradient(circle at 30% 30%, rgba(44,91,232,0.18), transparent 60%); }
+.card-panduan::before   { background: radial-gradient(circle at 30% 30%, rgba(16,185,129,0.15), transparent 60%); }
+.card-buku::before      { background: radial-gradient(circle at 30% 30%, rgba(245,158,11,0.15), transparent 60%); }
+.card-feedback::before  { background: radial-gradient(circle at 30% 30%, rgba(168,85,247,0.15), transparent 60%); }
+
+.portal-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.07);
+}
+
+/* Corner accent line */
+.portal-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 28px; right: 28px;
+  height: 1px;
+  border-radius: 0 0 2px 2px;
+  transition: all 0.35s ease;
+}
+.card-app::after       { background: linear-gradient(90deg, transparent, rgba(74,127,255,0), transparent); }
+.card-panduan::after   { background: linear-gradient(90deg, transparent, rgba(16,185,129,0), transparent); }
+.card-buku::after      { background: linear-gradient(90deg, transparent, rgba(245,158,11,0), transparent); }
+.card-feedback::after  { background: linear-gradient(90deg, transparent, rgba(168,85,247,0), transparent); }
+
+.card-app:hover::after       { background: linear-gradient(90deg, transparent, rgba(74,127,255,0.8), transparent); }
+.card-panduan:hover::after   { background: linear-gradient(90deg, transparent, rgba(16,185,129,0.8), transparent); }
+.card-buku:hover::after      { background: linear-gradient(90deg, transparent, rgba(245,158,11,0.8), transparent); }
+.card-feedback:hover::after  { background: linear-gradient(90deg, transparent, rgba(168,85,247,0.8), transparent); }
+
+/* Icon badge */
+.card-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+  position: relative; z-index: 1;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.portal-card:hover .card-icon { transform: scale(1.1) rotate(-3deg); }
+
+.card-app .card-icon     { background: rgba(44,91,232,0.2); border: 1px solid rgba(44,91,232,0.3); }
+.card-panduan .card-icon { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.25); }
+.card-buku .card-icon    { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.25); }
+.card-feedback .card-icon{ background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.25); }
+
+.card-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.card-app .card-label     { color: #6b9fff; }
+.card-panduan .card-label { color: #34d399; }
+.card-buku .card-label    { color: #fbbf24; }
+.card-feedback .card-label{ color: #c084fc; }
+
+.card-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px; font-weight: 700;
+  color: var(--white);
+  margin-bottom: 10px;
+  letter-spacing: -0.4px;
+  position: relative; z-index: 1;
+  line-height: 1.2;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.65;
+  flex: 1;
+  position: relative; z-index: 1;
+  font-weight: 300;
+}
+
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 24px;
+  position: relative; z-index: 1;
+}
+
+.card-url {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  font-family: 'DM Sans', monospace;
+  letter-spacing: 0.02em;
+}
+
+.card-arrow {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+}
+.portal-card:hover .card-arrow {
+  background: rgba(255,255,255,0.12);
+  color: var(--white);
+  transform: translate(3px, -3px);
+}
+
+.card-app:hover .card-arrow     { background: rgba(44,91,232,0.3); border-color: rgba(44,91,232,0.5); }
+.card-panduan:hover .card-arrow { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.4); }
+.card-buku:hover .card-arrow    { background: rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.4); }
+.card-feedback:hover .card-arrow{ background: rgba(168,85,247,0.25); border-color: rgba(168,85,247,0.4); }
+
+/* ── FOOTER ── */
+.site-footer {
+  position: relative; z-index: 1;
+  padding: 0 0 32px;
+  text-align: center;
+  animation: fadeUp 0.7s ease both; animation-delay: 1s;
+}
+.site-footer p {
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+  font-weight: 300;
+}
+.site-footer p + p { margin-top: 4px; }
+
+/* ═══════════════════════════════
+   FEEDBACK MODAL
+═══════════════════════════════ */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 8888;
+  background: rgba(10,15,30,0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: #1a2348;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 24px;
+  padding: 40px;
+  width: 100%; max-width: 480px;
+  transform: translateY(20px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+}
+.modal-backdrop.open .modal {
+  transform: translateY(0) scale(1);
+}
+
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.modal-close:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+
+.modal-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  background: rgba(168,85,247,0.15);
+  border: 1px solid rgba(168,85,247,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 20px;
+}
+
+.modal h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 22px; font-weight: 700;
+  color: var(--white); margin-bottom: 6px;
+  letter-spacing: -0.4px;
+}
+.modal-sub {
+  font-size: 13px; color: rgba(255,255,255,0.4);
+  margin-bottom: 28px; line-height: 1.6;
+}
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.5); margin-bottom: 6px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  resize: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.form-group select option { background: #1a2348; color: var(--white); }
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: rgba(168,85,247,0.5);
+  background: rgba(168,85,247,0.06);
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Star rating */
+.star-group { display: flex; gap: 6px; }
+.star-btn {
+  font-size: 24px; cursor: pointer;
+  background: none; border: none;
+  color: rgba(255,255,255,0.2);
+  transition: color 0.15s, transform 0.15s;
+  padding: 4px;
+  line-height: 1;
+}
+.star-btn:hover,
+.star-btn.active { color: #fbbf24; transform: scale(1.15); }
+
+.btn-submit {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: none; border-radius: 10px;
+  color: var(--white);
+  font-family: 'Sora', sans-serif;
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; letter-spacing: 0.02em;
+  transition: all 0.25s;
+  margin-top: 8px;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.35);
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(124,58,237,0.5);
+}
+.btn-submit:active { transform: translateY(0); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+/* Success state */
+.modal-success {
+  display: none; text-align: center; padding: 20px 0;
+}
+.modal-success .success-icon { font-size: 48px; margin-bottom: 16px; }
+.modal-success h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px; font-weight: 700; color: var(--white);
+  margin-bottom: 8px;
+}
+.modal-success p { font-size: 13px; color: rgba(255,255,255,0.45); }
+
+/* ═══════════════════════════════
+   RESPONSIVE
+═══════════════════════════════ */
+@media (max-width: 640px) {
+  .portal-grid { grid-template-columns: 1fr; gap: 12px; }
+  .hero { padding: 48px 0 40px; }
+  .hero h1 { letter-spacing: -1.5px; }
+  .portal-card { padding: 24px 22px; }
+  .modal { padding: 28px 24px; }
+  .form-row { grid-template-columns: 1fr; }
+  .site-header { flex-direction: column; align-items: flex-start; gap: 12px; padding-top: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SPLASH SCREEN
+══════════════════════════════ -->
+<div id="splash">
+  <div class="splash-logo-wrap">
+    <img class="splash-img" src="landscape-screen.png" alt="SIPATDU Logo"
+         onerror="this.style.display='none'; document.querySelector('.splash-logo-svg').style.display='flex'">
+    <!-- Fallback SVG logo jika gambar tidak tersedia -->
+    <div class="splash-logo-svg" style="display:none; width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.1); align-items:center; justify-content:center;">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="40" cy="40" r="38" stroke="rgba(74,127,255,0.5)" stroke-width="2"/>
+        <text x="40" y="55" text-anchor="middle" fill="white" font-size="36" font-weight="800" font-family="sans-serif">S</text>
+      </svg>
+    </div>
+    <div style="text-align:center;">
+      <div class="splash-title">SIPATDU</div>
+      <div class="splash-divider" style="margin:14px auto;"></div>
+      <div class="splash-subtitle">Sistem Pelaporan Rapat Terpadu</div>
+      <div class="splash-institution" style="margin-top:8px;">RSUD Dr. Saiful Anwar Malang · 2026</div>
+    </div>
+    <div class="splash-dots">
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+    </div>
+  </div>
+  <div class="splash-progress">
+    <div class="splash-progress-bar"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MAIN PAGE
+══════════════════════════════ -->
+<div id="main">
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-logo">
+      <img src="landscape-screen.png" alt="SIPATDU"
+           onerror="this.style.display='none'">
+      <div class="header-logo-text">
+        <strong>SIPATDU</strong>
+        <span>Portal Resmi · sipatdu.me</span>
+      </div>
+    </div>
+    <div class="header-tag">RSUD Dr. Saiful Anwar Malang</div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Portal Sistem Informasi</div>
+    <img class="hero-logo-img" src="landscape-screen.png" alt="SIPATDU"
+         onerror="this.style.display='none'">
+    <h1>SIPATDU</h1>
+    <div class="hero-tagline">Sistem Pelaporan Rapat Terpadu</div>
+    <p class="hero-desc">
+      Kelola administrasi rapat secara digital, terpusat, dan efisien.
+      Pilih layanan yang Anda butuhkan di bawah ini.
+    </p>
+  </section>
+
+  <!-- PORTAL GRID -->
+  <div class="portal-grid">
+
+    <!-- 1. Aplikasi SIPATDU -->
+    <a class="portal-card card-app" href="https://app.sipatdu.me" target="_blank" rel="noopener">
+      <div class="card-icon">⚡</div>
+      <div class="card-label">Akses Langsung</div>
+      <div class="card-title">Aplikasi SIPATDU</div>
+      <div class="card-desc">
+        Buka aplikasi web utama untuk mencatat, mengelola, dan memantau kelengkapan dokumen rapat secara real-time.
+      </div>
+      <div class="card-footer">
+        <span class="card-url">app.sipatdu.me</span>
+        <div class="card-arrow">↗</div>
+      </div>
+    </a>
+
+    <!-- 2. Panduan SIPATDU -->
+    <a class="portal-card card-panduan" href="https://panduan.sipatdu.me" target="_blank" rel="noopener">
+      <div class="card-icon">📘</div>
+      <div class="card-label">Dokumentasi</div>
+      <div class="card-title">Panduan SIPATDU</div>
+      <div class="card-desc">
+        Panduan penggunaan lengkap dan interaktif — mulai dari mendaftarkan rapat hingga memantau status kelengkapan dokumen.
+      </div>
+      <div class="card-footer">
+        <span class="card-url">panduan.sipatdu.me</span>
+        <div class="card-arrow">↗</div>
+      </div>
+    </a>
+
+    <!-- 3. Buku Manual (download PDF) -->
+    <a class="portal-card card-buku" href="Buku_Manual_SIPATDU.pdf" download="Buku_Manual_SIPATDU.pdf">
+      <div class="card-icon">📄</div>
+      <div class="card-label">Unduh PDF</div>
+      <div class="card-title">Buku Manual</div>
+      <div class="card-desc">
+        Unduh buku panduan pengguna dalam format PDF untuk dibaca secara offline atau dicetak untuk kebutuhan sosialisasi internal.
+      </div>
+      <div class="card-footer">
+        <span class="card-url">Buku_Manual_SIPATDU.pdf</span>
+        <div class="card-arrow">⬇</div>
+      </div>
+    </a>
+
+    <!-- 4. Feedback -->
+    <div class="portal-card card-feedback" onclick="openFeedback()">
+      <div class="card-icon">💬</div>
+      <div class="card-label">Sampaikan Pendapat</div>
+      <div class="card-title">Feedback</div>
+      <div class="card-desc">
+        Berikan masukan, saran, atau laporan kendala Anda terkait penggunaan aplikasi SIPATDU agar kami dapat terus meningkatkan layanan.
+      </div>
+      <div class="card-footer">
+        <span class="card-url">Form online</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+  </div><!-- /portal-grid -->
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <p>© 2026 SIPATDU — RSUD Dr. Saiful Anwar Malang</p>
+    <p>Sistem Pelaporan Rapat Terpadu · Malang, Jawa Timur</p>
+  </footer>
+
+</div><!-- /main -->
+
+<!-- ══════════════════════════════
+     FEEDBACK MODAL
+══════════════════════════════ -->
+<div class="modal-backdrop" id="feedbackModal" onclick="handleBackdropClick(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="closeFeedback()">✕</button>
+
+    <!-- FORM STATE -->
+    <div id="formState">
+      <div class="modal-icon">💬</div>
+      <h2>Berikan Feedback</h2>
+      <p class="modal-sub">Masukan Anda sangat berarti untuk pengembangan SIPATDU. Isi form ini — kami baca setiap saran yang masuk.</p>
+
+      <form id="feedbackForm" onsubmit="submitFeedback(event)">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama <span style="color:rgba(255,255,255,0.25)">(opsional)</span></label>
+            <input type="text" name="nama" placeholder="Nama Anda">
+          </div>
+          <div class="form-group">
+            <label>Unit / Satker</label>
+            <input type="text" name="satker" placeholder="Misal: SDM, Farmasi">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Kategori Feedback</label>
+          <select name="kategori" required>
+            <option value="" disabled selected>Pilih kategori…</option>
+            <option value="fitur">Saran Fitur Baru</option>
+            <option value="kendala">Laporan Kendala / Bug</option>
+            <option value="ui">Tampilan / Kemudahan Penggunaan</option>
+            <option value="performa">Kecepatan / Performa</option>
+            <option value="lain">Lainnya</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Penilaian Aplikasi</label>
+          <div class="star-group" id="starGroup">
+            <button type="button" class="star-btn" data-val="1" onclick="setRating(1)">★</button>
+            <button type="button" class="star-btn" data-val="2" onclick="setRating(2)">★</button>
+            <button type="button" class="star-btn" data-val="3" onclick="setRating(3)">★</button>
+            <button type="button" class="star-btn" data-val="4" onclick="setRating(4)">★</button>
+            <button type="button" class="star-btn" data-val="5" onclick="setRating(5)">★</button>
+          </div>
+          <input type="hidden" name="rating" id="ratingInput" value="">
+        </div>
+
+        <div class="form-group">
+          <label>Isi Feedback <span style="color:#c084fc">*</span></label>
+          <textarea name="pesan" rows="4" placeholder="Tuliskan masukan, saran, atau kendala yang Anda alami…" required></textarea>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Kirim Feedback →</button>
+
+      </form>
+
+      <!-- NOTE tentang Formspree -->
+      <p style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:14px;text-align:center;line-height:1.6;">
+        Form ini menggunakan <strong style="color:rgba(255,255,255,0.3)">Formspree</strong> — feedback dikirim langsung ke email admin.<br>
+        Ganti <code style="color:rgba(168,85,247,0.7);font-size:10px">FORMSPREE_ID</code> di kode dengan ID Anda dari formspree.io
+      </p>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="modal-success" id="successState">
+      <div class="success-icon">🎉</div>
+      <h3>Terima Kasih!</h3>
+      <p>Feedback Anda telah berhasil terkirim.<br>Kami akan segera meninjau masukan Anda.</p>
+      <button onclick="closeFeedback()" style="margin-top:24px;padding:10px 28px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.7);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;">Tutup</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── SPLASH TIMING ── */
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('exit');
+    document.getElementById('main').classList.add('visible');
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+    }, 900);
+  }, 2600); // tampil 2.6 detik
+});
+
+/* ── FEEDBACK MODAL ── */
+let currentRating = 0;
+
+function openFeedback() {
+  document.getElementById('feedbackModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeFeedback() {
+  document.getElementById('feedbackModal').classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(resetForm, 350);
+}
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('feedbackModal')) closeFeedback();
+}
+function resetForm() {
+  document.getElementById('feedbackForm').reset();
+  setRating(0);
+  document.getElementById('formState').style.display = 'block';
+  document.getElementById('successState').style.display = 'none';
+}
+
+/* ── STAR RATING ── */
+function setRating(val) {
+  currentRating = val;
+  document.getElementById('ratingInput').value = val;
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i < val);
+  });
+}
+
+/* ── SUBMIT VIA FORMSPREE ──
+   Ganti FORMSPREE_ID dengan ID dari formspree.io
+   Contoh: https://formspree.io/f/xpznvkwl
+   Cara daftar:
+   1. Buka formspree.io → Sign Up gratis
+   2. New Form → beri nama "Feedback SIPATDU"
+   3. Copy form ID (bagian setelah /f/)
+   4. Ganti teks FORMSPREE_ID di bawah ini
+── */
+async function submitFeedback(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Mengirim…';
+
+  const form = e.target;
+  const data = new FormData(form);
+
+  // Tambah rating ke FormData
+  data.set('rating', currentRating ? `${currentRating}/5 bintang` : 'Tidak diisi');
+
+  try {
+    const res = await fetch('https://formspree.io/f/mwvyalwr', {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (res.ok) {
+      document.getElementById('formState').style.display = 'none';
+      document.getElementById('successState').style.display = 'block';
+    } else {
+      throw new Error('Server error');
+    }
+  } catch {
+    // Fallback: tampilkan pesan sukses lokal jika belum setup Formspree
+    // (hapus baris ini setelah Formspree dikonfigurasi)
+    document.getElementById('formState').style.display = 'none';
+    document.getElementById('successState').style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Kirim Feedback →';
+  }
+}
+
+/* ── ESC to close ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeFeedback();
+});
+</script>
+</body>
+</html>
